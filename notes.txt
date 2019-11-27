@@ -1,0 +1,3 @@
+g++ -I ~/Desktop/Kay/projects/perforatedLamp/External/eigen -o perf_lamp perf_lamp.cc -fopenmp
+
+

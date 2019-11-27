@@ -1107,12 +1107,19 @@ printf("B.\n");
 printf("C.\n");
     //2. patterns
     //read in projection images binary pixel patterns in .txt (6 surrounding walls)
-    int b_pixel_m=600;
-    int b_pixel_n=1000;
-    int f_pixel_m=600;
-    int f_pixel_n=1000;
+    int b_pixel_m=600; int b_pixel_n=1000;
+    int f_pixel_m=600; int f_pixel_n=1000;
+    int r_pixel_m=600; int r_pixel_n=1000;
+    int l_pixel_m=600; int l_pixel_n=1000;
+    int u_pixel_m=1000; int u_pixel_n=1000;
+    int d_pixel_m=1000; int d_pixel_n=1000;
+    
     read_image("santa_deer.txt", b_pixel_m, b_pixel_n, &bgrid);
     read_image("snow_flakes.txt", f_pixel_m, f_pixel_n, &fgrid);
+    read_image("r_Tria_pattern.txt", r_pixel_m, r_pixel_n, &rgrid);
+    read_image("l_Tria_pattern.txt", l_pixel_m, l_pixel_n, &lgrid);
+    read_image("u_Tria_pattern.txt", u_pixel_m, u_pixel_n, &ugrid);
+    read_image("d_Tria_pattern.txt", d_pixel_m, d_pixel_n, &dgrid);
     
 printf("D.\n");
     //define surrounding walls domain
@@ -1134,7 +1141,7 @@ printf("D.\n");
     //voxel grid (lsi, lsj, lsk) that the light source is in.
     int lsi=(int)((lsx-voxelizer._pmin[0])/voxelizer._dx);
     int lsj=(int)((lsy-voxelizer._pmin[1])/voxelizer._dx);
-    int isk=(int)((lsz-voxelizer._pmin[2])/voxelizer._dx);
+    int lsk=(int)((lsz-voxelizer._pmin[2])/voxelizer._dx);
     
     int nx = voxelizer._nvoxel[0], ny = voxelizer._nvoxel[1], nz = voxelizer._nvoxel[2];
 printf("E.\n");
@@ -1142,17 +1149,16 @@ printf("E.\n");
 
     //loop through all pattern grids
     //1. bgrid: santa_deer
-    double x = wall_xmin; //backwall: x<lsx, x ii from 0 to lsi
-    double y;
-    double z;
+    //backwall: x<lsx, x ii from 0 to lsi
     #pragma omp parallel for num_threads(16)
     for (int i=0; i<b_pixel_m; i++) {
         for (int j=0; j<b_pixel_n; j++){
+            double x = wall_xmin;
             //if light ray
             //match image grids to surrounding walls coordinates
             if(bgrid[b_pixel_n*i+j]==1){
-                y=wall_ymin+wall_yrange/(b_pixel_n-1)*j;
-                z=wall_zmax-wall_zrange/(b_pixel_m-1)*i;
+                double y=wall_ymin+wall_yrange/(b_pixel_n-1)*j;
+                double z=wall_zmax-wall_zrange/(b_pixel_m-1)*i;
                 
                 for(int ii=0; ii<=lsi;ii++){
                     double common=voxelizer._pmin[0]+voxelizer._dx*ii+dx_half;
@@ -1163,23 +1169,26 @@ printf("E.\n");
                         int iitemp=(int)((xx-voxelizer._pmin[0])/voxelizer._dx);
                         int jjtemp=(int)((yy-voxelizer._pmin[1])/voxelizer._dx);
                         int kktemp=(int)((zz-voxelizer._pmin[2])/voxelizer._dx);
-                        voxelizer._voxels[iitemp][jjtemp][kktemp]=false;
+                        if(iitemp<nx && jjtemp<ny && kktemp<nz && iitemp>=0 && jjtemp>=0 && kktemp>=0){
+                            voxelizer._voxels[iitemp][jjtemp][kktemp]=false;
+                        }
                     }
                 }
             }
         }
     }
-    
-    //1. fgrid: snowflakes
-    x = wall_xmax; //frontwall: x>lsx, x ii from lsi to nx
+printf("E.1\n");
+    //2. fgrid: snowflakes
+    //frontwall: x>lsx, x ii from lsi to nx
     #pragma omp parallel for num_threads(16)
     for (int i=0; i<f_pixel_m; i++) {
         for (int j=0; j<f_pixel_n; j++){
+            double x = wall_xmax; 
             //if light ray
             //match image grids to surrounding walls coordinates
             if(fgrid[f_pixel_n*i+j]==1){
-                y=wall_ymin+wall_yrange/(f_pixel_n-1)*j;
-                z=wall_zmax-wall_zrange/(f_pixel_m-1)*i;
+                double y=wall_ymin+wall_yrange/(f_pixel_n-1)*j;
+                double z=wall_zmax-wall_zrange/(f_pixel_m-1)*i;
                 
                 for(int ii=lsi; ii<nx;ii++){
                     double common=voxelizer._pmin[0]+voxelizer._dx*ii+dx_half;
@@ -1190,7 +1199,130 @@ printf("E.\n");
                         int iitemp=(int)((xx-voxelizer._pmin[0])/voxelizer._dx);
                         int jjtemp=(int)((yy-voxelizer._pmin[1])/voxelizer._dx);
                         int kktemp=(int)((zz-voxelizer._pmin[2])/voxelizer._dx);
-                        if(iitemp<nx && jjtemp<ny && kktemp<nz){
+                        if(iitemp<nx && jjtemp<ny && kktemp<nz && iitemp>=0 && jjtemp>=0 && kktemp>=0){
+                            voxelizer._voxels[iitemp][jjtemp][kktemp]=false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+printf("E.2\n");
+    //3. lgrid: tria
+    //leftwall: y<lsy, y jj from 0 to lsj
+    #pragma omp parallel for num_threads(16)
+    for (int i=0; i<l_pixel_m; i++) {
+        for (int j=0; j<l_pixel_n; j++){
+            double y = wall_ymin;
+            //if light ray
+            //match image grids to surrounding walls coordinates
+            if(lgrid[l_pixel_n*i+j]==1){
+                double x=wall_xmax-wall_xrange/(l_pixel_n-1)*j;
+                double z=wall_zmax-wall_zrange/(l_pixel_m-1)*i;
+                
+                for(int jj=0; jj<=lsj;jj++){
+                    double common=voxelizer._pmin[1]+voxelizer._dx*jj+dx_half;
+                    
+                    for(int subjj=0; subjj<5;subjj++){
+                        
+                        double yy=common+0.2*voxelizer._dx*subjj;
+                        double xx=(x-lsx)/(y-lsy)*(yy-lsy)+lsx;
+                        double zz=(z-lsz)/(x-lsx)*(xx-lsx)+lsz;
+                        int iitemp=(int)((xx-voxelizer._pmin[0])/voxelizer._dx);
+                        int jjtemp=(int)((yy-voxelizer._pmin[1])/voxelizer._dx);
+                        int kktemp=(int)((zz-voxelizer._pmin[2])/voxelizer._dx);
+                        if(iitemp<nx && jjtemp<ny && kktemp<nz && iitemp>=0 && jjtemp>=0 && kktemp>=0){
+                            
+                            voxelizer._voxels[iitemp][jjtemp][kktemp]=false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+printf("E.3\n");
+    //4. rgrid: tria
+    //rightwall: y>lsy, y jj from lsj to ny
+    #pragma omp parallel for num_threads(16)
+    for (int i=0; i<r_pixel_m; i++) {
+        for (int j=0; j<r_pixel_n; j++){
+            double y = wall_ymax;
+            //if light ray
+            //match image grids to surrounding walls coordinates
+            if(rgrid[r_pixel_n*i+j]==1){
+                double x=wall_xmin+wall_xrange/(r_pixel_n-1)*j;
+                double z=wall_zmax-wall_zrange/(r_pixel_m-1)*i;
+                
+                for(int jj=lsj; jj<ny;jj++){
+                    double common=voxelizer._pmin[1]+voxelizer._dx*jj+dx_half;
+                    for(int subjj=0; subjj<5;subjj++){
+                        double yy=common+0.2*voxelizer._dx*subjj;
+                        double xx=(x-lsx)/(y-lsy)*(yy-lsy)+lsx;
+                        double zz=(z-lsz)/(x-lsx)*(xx-lsx)+lsz;
+                        int iitemp=(int)((xx-voxelizer._pmin[0])/voxelizer._dx);
+                        int jjtemp=(int)((yy-voxelizer._pmin[1])/voxelizer._dx);
+                        int kktemp=(int)((zz-voxelizer._pmin[2])/voxelizer._dx);
+                        if(iitemp<nx && jjtemp<ny && kktemp<nz && iitemp>=0 && jjtemp>=0 && kktemp>=0){
+                            voxelizer._voxels[iitemp][jjtemp][kktemp]=false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+printf("E.4\n");
+    //5. dgrid: tria
+    //downwall: z<lsk, z kk from 0 to lsk
+    #pragma omp parallel for num_threads(16)
+    for (int i=0; i<d_pixel_m; i++) {
+        for (int j=0; j<d_pixel_n; j++){
+            double z = wall_zmin; 
+            //if light ray
+            //match image grids to surrounding walls coordinates
+            if(dgrid[d_pixel_n*i+j]==1){
+                double x=wall_xmin+wall_xrange/(d_pixel_m-1)*i;
+                double y=wall_ymin+wall_yrange/(d_pixel_n-1)*j;
+                for(int kk=0; kk<=lsk;kk++){
+                    double common=voxelizer._pmin[2]+voxelizer._dx*kk+dx_half;
+                    for(int subkk=0; subkk<5;subkk++){
+                        double zz=common+0.2*voxelizer._dx*subkk;
+                        double xx=(x-lsx)/(z-lsz)*(zz-lsz)+lsx;
+                        double yy=(y-lsy)/(x-lsx)*(xx-lsx)+lsy;
+                        
+                        int iitemp=(int)((xx-voxelizer._pmin[0])/voxelizer._dx);
+                        int jjtemp=(int)((yy-voxelizer._pmin[1])/voxelizer._dx);
+                        int kktemp=(int)((zz-voxelizer._pmin[2])/voxelizer._dx);
+
+                        if(iitemp<nx && jjtemp<ny && kktemp<nz && iitemp>=0 && jjtemp>=0 && kktemp>=0){
+                            voxelizer._voxels[iitemp][jjtemp][kktemp]=false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    //6. ugrid: tria
+    //upwall: z>lsk, z kk from lsk to nz
+    #pragma omp parallel for num_threads(16)
+    for (int i=0; i<u_pixel_m; i++) {
+        for (int j=0; j<u_pixel_n; j++){
+            double z = wall_zmax; 
+            //if light ray
+            //match image grids to surrounding walls coordinates
+            if(ugrid[u_pixel_n*i+j]==1){
+                double x=wall_xmin+wall_xrange/(u_pixel_m-1)*i;
+                double y=wall_ymax-wall_yrange/(u_pixel_n-1)*j;
+                
+                for(int kk=lsk; kk<nz;kk++){
+                    double common=voxelizer._pmin[2]+voxelizer._dx*kk+dx_half;
+                    for(int subkk=0; subkk<5;subkk++){
+                        double zz=common+0.2*voxelizer._dx*subkk;
+                        double xx=(x-lsx)/(z-lsz)*(zz-lsz)+lsx;
+                        double yy=(y-lsy)/(x-lsx)*(xx-lsx)+lsy;
+                        int iitemp=(int)((xx-voxelizer._pmin[0])/voxelizer._dx);
+                        int jjtemp=(int)((yy-voxelizer._pmin[1])/voxelizer._dx);
+                        int kktemp=(int)((zz-voxelizer._pmin[2])/voxelizer._dx);
+                        if(iitemp<nx && jjtemp<ny && kktemp<nz && iitemp>=0 && jjtemp>=0 && kktemp>=0){
                             voxelizer._voxels[iitemp][jjtemp][kktemp]=false;
                         }
                     }
@@ -1199,12 +1331,12 @@ printf("E.\n");
         }
     }
     
-    
-    
+ 
+
 printf("F.\n");
     //output the new voxel model
-    voxelizer.WriteVoxelToMesh("sphere_model_test1.stl");
-printf("F2.\n");
+    //voxelizer.WriteVoxelToMesh("sphere_model_test1.stl");
+//printf("F2.\n");
     voxelizer.WriteVoxelToFile("sphere_model_voxel_info.txt");
 printf("G.\n");
     //marching cube version model
