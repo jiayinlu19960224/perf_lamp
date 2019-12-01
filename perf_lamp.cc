@@ -1100,7 +1100,7 @@ int main() {
     //scale the model 
     //voxelize model 
 printf("A.\n");
-    Voxelizer<double> voxelizer("spherical_shell.stl", 0.002);  //0.002
+    Voxelizer<double> voxelizer("shape3.stl", 0.002);  //0.002
 printf("B.\n");
     voxelizer.AdvancedVoxelization();
     double dx_half=0.5*voxelizer._dx;
@@ -1112,7 +1112,7 @@ printf("C.\n");
     int r_pixel_m=600; int r_pixel_n=1000;
     int l_pixel_m=600; int l_pixel_n=1000;
     int u_pixel_m=1000; int u_pixel_n=1000;
-    int d_pixel_m=1000; int d_pixel_n=1000;
+    int d_pixel_m=2000; int d_pixel_n=2000;
     
     read_image("santa_deer.txt", b_pixel_m, b_pixel_n, &bgrid);
     read_image("snow_flakes.txt", f_pixel_m, f_pixel_n, &fgrid);
@@ -1129,7 +1129,8 @@ printf("D.\n");
     double wall_ymin=-2.5; //lgrid
     double wall_ymax=2.5;  //rgrid
     double wall_yrange=wall_ymax-wall_ymin;
-    double wall_zmin=-0.5; //dgrid
+    double wall_zmin=-2.5; //dgrid: shape2
+    //double wall_zmin=-0.5; //dgrid: spherical
     double wall_zmax=2.5;  //ugrid
     double wall_zrange=wall_zmax-wall_zmin;
     
@@ -1137,7 +1138,8 @@ printf("D.\n");
     //define a light source location
     double lsx=0.0; 
     double lsy=0.0; 
-    double lsz=voxelizer.model_zmin+1.0/3.0*(voxelizer.model_zmax-voxelizer.model_zmin); //at 1/3 height 
+    double lsz=voxelizer.model_zmin+0.5*(voxelizer.model_zmax-voxelizer.model_zmin); //at zmid: lamp shape 2
+    //double lsz=voxelizer.model_zmin+1.0/3.0*(voxelizer.model_zmax-voxelizer.model_zmin); //at 1/3 height: spherical
     //voxel grid (lsi, lsj, lsk) that the light source is in.
     int lsi=(int)((lsx-voxelizer._pmin[0])/voxelizer._dx);
     int lsj=(int)((lsy-voxelizer._pmin[1])/voxelizer._dx);
@@ -1162,8 +1164,8 @@ printf("E.\n");
                 
                 for(int ii=0; ii<=lsi;ii++){
                     double common=voxelizer._pmin[0]+voxelizer._dx*ii+dx_half;
-                    for(int subii=0; subii<5;subii++){
-                        double xx=common+0.2*voxelizer._dx*subii;
+                    for(int subii=0; subii<10;subii++){
+                        double xx=common+0.1*voxelizer._dx*subii;
                         double yy=(y-lsy)/(x-lsx)*(xx-lsx)+lsy;
                         double zz=(z-lsz)/(x-lsx)*(xx-lsx)+lsz;
                         int iitemp=(int)((xx-voxelizer._pmin[0])/voxelizer._dx);
@@ -1192,8 +1194,8 @@ printf("E.1\n");
                 
                 for(int ii=lsi; ii<nx;ii++){
                     double common=voxelizer._pmin[0]+voxelizer._dx*ii+dx_half;
-                    for(int subii=0; subii<5;subii++){
-                        double xx=common+0.2*voxelizer._dx*subii;
+                    for(int subii=0; subii<10;subii++){
+                        double xx=common+0.1*voxelizer._dx*subii;
                         double yy=(y-lsy)/(x-lsx)*(xx-lsx)+lsy;
                         double zz=(z-lsz)/(x-lsx)*(xx-lsx)+lsz;
                         int iitemp=(int)((xx-voxelizer._pmin[0])/voxelizer._dx);
@@ -1223,9 +1225,9 @@ printf("E.2\n");
                 for(int jj=0; jj<=lsj;jj++){
                     double common=voxelizer._pmin[1]+voxelizer._dx*jj+dx_half;
                     
-                    for(int subjj=0; subjj<5;subjj++){
+                    for(int subjj=0; subjj<10;subjj++){
                         
-                        double yy=common+0.2*voxelizer._dx*subjj;
+                        double yy=common+0.1*voxelizer._dx*subjj;
                         double xx=(x-lsx)/(y-lsy)*(yy-lsy)+lsx;
                         double zz=(z-lsz)/(x-lsx)*(xx-lsx)+lsz;
                         int iitemp=(int)((xx-voxelizer._pmin[0])/voxelizer._dx);
@@ -1255,8 +1257,8 @@ printf("E.3\n");
                 
                 for(int jj=lsj; jj<ny;jj++){
                     double common=voxelizer._pmin[1]+voxelizer._dx*jj+dx_half;
-                    for(int subjj=0; subjj<5;subjj++){
-                        double yy=common+0.2*voxelizer._dx*subjj;
+                    for(int subjj=0; subjj<10;subjj++){
+                        double yy=common+0.1*voxelizer._dx*subjj;
                         double xx=(x-lsx)/(y-lsy)*(yy-lsy)+lsx;
                         double zz=(z-lsz)/(x-lsx)*(xx-lsx)+lsz;
                         int iitemp=(int)((xx-voxelizer._pmin[0])/voxelizer._dx);
@@ -1284,8 +1286,8 @@ printf("E.4\n");
                 double y=wall_ymin+wall_yrange/(d_pixel_n-1)*j;
                 for(int kk=0; kk<=lsk;kk++){
                     double common=voxelizer._pmin[2]+voxelizer._dx*kk+dx_half;
-                    for(int subkk=0; subkk<5;subkk++){
-                        double zz=common+0.2*voxelizer._dx*subkk;
+                    for(int subkk=0; subkk<20;subkk++){
+                        double zz=common+0.05*voxelizer._dx*subkk;
                         double xx=(x-lsx)/(z-lsz)*(zz-lsz)+lsx;
                         double yy=(y-lsy)/(x-lsx)*(xx-lsx)+lsy;
                         
@@ -1315,8 +1317,8 @@ printf("E.4\n");
                 
                 for(int kk=lsk; kk<nz;kk++){
                     double common=voxelizer._pmin[2]+voxelizer._dx*kk+dx_half;
-                    for(int subkk=0; subkk<5;subkk++){
-                        double zz=common+0.2*voxelizer._dx*subkk;
+                    for(int subkk=0; subkk<10;subkk++){
+                        double zz=common+0.1*voxelizer._dx*subkk;
                         double xx=(x-lsx)/(z-lsz)*(zz-lsz)+lsx;
                         double yy=(y-lsy)/(x-lsx)*(xx-lsx)+lsy;
                         int iitemp=(int)((xx-voxelizer._pmin[0])/voxelizer._dx);
@@ -1337,12 +1339,12 @@ printf("F.\n");
     //output the new voxel model
     //voxelizer.WriteVoxelToMesh("sphere_model_test1.stl");
 //printf("F2.\n");
-    voxelizer.WriteVoxelToFile("sphere_model_voxel_info.txt");
+    voxelizer.WriteVoxelToFile("shape3_voxel_info.txt");
 printf("G.\n");
     //marching cube version model
-    MarchingCube<double> mc("sphere_model_voxel_info.txt");
+    MarchingCube<double> mc("shape3_voxel_info.txt");
     mc.BuildMesh();
-    mc.ExportMeshToFile("sphere_model_bf_mc.stl");
+    mc.ExportMeshToFile("shape3_bf_mc.stl");
 printf("H.\n");
     return 0;
 }
